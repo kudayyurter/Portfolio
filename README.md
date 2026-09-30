@@ -4,7 +4,7 @@ Source for [kudayyurter.dev](https://kudayyurter.dev): a single page on black wi
 
 ## Development
 
-Requires Node.js 20.9 or newer (CI uses Node 24).
+Requires Node.js 20.19+, 22.13+, or 24+ (CI uses Node 24).
 
 ```bash
 npm install

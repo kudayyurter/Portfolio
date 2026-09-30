@@ -1,0 +1,6 @@
+[
+  {"move": [900, 420], "wait": 1000},
+  {"click": ".site-nav >> text=Projects", "wait": 2600},
+  {"scroll": 1850, "wait": 2800},
+  {"click": ".site-nav >> text=Contact", "wait": 2200}
+]

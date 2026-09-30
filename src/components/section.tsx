@@ -4,16 +4,18 @@ import { PixelReveal } from "@/components/pixel-reveal";
 export function Section({
   id,
   title,
+  className = "",
   children,
 }: {
   id: string;
   title: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <section
       id={id}
-      className="section container"
+      className={`section container ${className}`}
       aria-labelledby={`${id}-title`}
     >
       <PixelReveal className="section__title-wrap">

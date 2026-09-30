@@ -136,10 +136,35 @@ a {
 .hero h1 {
   margin: 0;
 }
+/*
+ * Each word's width is proportional to its column count (set by
+ * pixel-name.tsx), so both words share one pixel size. Phones stack the words
+ * to keep the pixels large.
+ */
+.pixel-name {
+  display: flex;
+  column-gap: calc(100% * var(--word-gap) / var(--line-columns));
+}
 .pixel-name svg {
   display: block;
-  width: 100%;
+  flex: var(--columns) 1 0;
+  min-width: 0;
   height: auto;
+}
+@media (max-width: 639px) {
+  .pixel-name {
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 440px;
+  }
+  .pixel-name svg {
+    flex: none;
+    width: calc(100% * var(--columns) / var(--widest-columns));
+  }
+  .pixel-name svg + svg {
+    /* Percentage margins resolve against width, so the gap scales with the pixels. */
+    margin-top: calc(100% * var(--line-gap) / var(--widest-columns));
+  }
 }
 
 /* Buttons and links */
@@ -153,12 +178,17 @@ a {
   border: 1px solid var(--line);
   border-radius: 999px;
   overflow-wrap: anywhere;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
   font-size: 0.9375rem;
   text-decoration: none;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
 }
+/* Hover inverts the button outright, like a pixel flipping. */
 .button:hover {
   border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
 }
 .text-link {
   display: inline-flex;
@@ -182,6 +212,10 @@ a:hover > .arrow,
 a:focus-visible > .arrow,
 .project--linked:hover .arrow {
   transform: translate(3px, -3px);
+}
+a:hover > .arrow--up,
+a:focus-visible > .arrow--up {
+  transform: translateY(-3px);
 }
 
 /* Sections */
@@ -307,6 +341,7 @@ a:focus-visible > .arrow,
 }
 
 /* Experience */
+/* A square beside each date: filled for the current role, outlined for past ones. */
 .timeline,
 .projects {
   margin: 0;
@@ -324,12 +359,26 @@ a:focus-visible > .arrow,
   padding: 32px 0;
 }
 .job__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
   font-family: var(--mono);
   font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--faint);
+}
+.job__meta::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--faint);
+}
+.job__meta[data-current]::before {
+  border-color: var(--fg);
+  background: var(--fg);
 }
 .job h3 {
   margin: 6px 0 0;
@@ -385,6 +434,21 @@ a:focus-visible > .arrow,
 .project__link {
   margin-top: 14px;
 }
+.project--linked .project__body {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 24px;
+  max-width: calc(68ch + 96px);
+}
+.project__icon {
+  padding-top: 8px; /* level with the title's cap height */
+  color: var(--fg);
+}
+.project__icon svg {
+  display: block;
+  width: auto;
+  height: calc(var(--rows) * 3px); /* 3px per pixel, like the monograms */
+}
 
 /*
  * A personal project row is one big link: the link's overlay covers the row,
@@ -434,13 +498,60 @@ a:focus-visible > .arrow,
   opacity: 1;
 }
 @media (max-width: 640px) {
-  .job__body {
+  .job__body,
+  .project--linked .project__body {
     grid-template-columns: 1fr;
     gap: 12px;
+  }
+  .project__icon {
+    padding-top: 0;
   }
 }
 
 /* Contact */
+/*
+ * The one inverted section. Redefining the tokens flips everything inside,
+ * including focus rings and selection. The box-shadow paints the white out to
+ * the viewport edges and clip-path trims it to the section's height, so the
+ * band is full-bleed without leaving the container or overflowing.
+ */
+.section--inverted {
+  --bg: #fff;
+  --fg: #000;
+  --muted: #404040;
+  --faint: #595959; /* 7:1 on white */
+  --line: #d4d4d4;
+  padding-block: clamp(48px, 6vw, 72px);
+  background: var(--bg);
+  color: var(--fg);
+  box-shadow: 0 0 0 100vmax var(--bg);
+  clip-path: inset(0 -100vmax);
+}
+/* GitHub's mark is white; flip it to black on white, and back on hover. */
+.section--inverted .button img[src$="github.svg"] {
+  filter: invert(1);
+}
+.section--inverted .button:hover img[src$="github.svg"] {
+  filter: none;
+}
+/* Copy is a helper for the email, not a fourth contact route, so it stays quiet until hovered. */
+.copy-button {
+  padding-inline: 12px;
+  border-color: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+/* Every label shares one cell, so the widest sets the size and nothing shifts. */
+.copy-button__labels {
+  display: grid;
+  justify-items: center;
+}
+.copy-button__labels > span {
+  grid-area: 1 / 1;
+}
+.copy-button__labels > [data-shown="false"] {
+  visibility: hidden;
+}
 .contact-links {
   display: flex;
   flex-wrap: wrap;
@@ -461,14 +572,30 @@ a:focus-visible > .arrow,
 }
 .site-footer__inner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  padding-block: 32px;
+  padding-block: 24px;
   font-size: 0.8125rem;
   color: var(--faint);
 }
-.site-footer img {
-  image-rendering: pixelated;
+.site-footer__initials {
+  display: block;
+  width: auto;
+  height: 14px; /* 2px per pixel */
+  color: var(--fg);
+}
+.site-footer__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-left: auto;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.site-footer__top:hover {
+  color: var(--fg);
 }
 
 /* Pixel reveal */

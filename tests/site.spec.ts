@@ -79,9 +79,9 @@ test("renders every section and the key content", async ({ page }) => {
   await expect(page.getByRole("img", { name: "Cummins" })).toBeAttached();
 });
 
-test("the top of the page is just the name, on one line", async ({ page }) => {
+test("the top of the page is just the name", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1 svg")).toHaveCount(1);
+  await expect(page.locator("h1 svg")).toHaveCount(2);
   await expect(page.getByRole("img", { name: /portrait/i })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "View projects" })).toHaveCount(
     0,
@@ -403,7 +403,9 @@ test("sections run About, Experience, Tech stack, Work, Personal, Contact", asyn
   ]);
 });
 
-test("secondary text meets 4.5:1 contrast on black", async ({ page }) => {
+test("secondary text meets 4.5:1 contrast on its background", async ({
+  page,
+}) => {
   await page.goto("/");
   const ratios = await page
     .locator(
@@ -411,17 +413,34 @@ test("secondary text meets 4.5:1 contrast on black", async ({ page }) => {
     )
     .evaluateAll((elements) =>
       elements.map((element) => {
-        const [r, g, b] = getComputedStyle(element)
-          .color.match(/\d+/g)!
-          .slice(0, 3)
-          .map((value) => {
-            const channel = Number(value) / 255;
-            return channel <= 0.03928
-              ? channel / 12.92
-              : ((channel + 0.055) / 1.055) ** 2.4;
-          });
-        const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-        return (luminance + 0.05) / 0.05;
+        const luminance = (color: string) => {
+          const [r, g, b] = color
+            .match(/\d+/g)!
+            .slice(0, 3)
+            .map((value) => {
+              const channel = Number(value) / 255;
+              return channel <= 0.03928
+                ? channel / 12.92
+                : ((channel + 0.055) / 1.055) ** 2.4;
+            });
+          return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        };
+        // The nearest ancestor with a solid background is what the text sits on.
+        let surface: Element | null = element;
+        let background = "rgb(0, 0, 0)";
+        while (surface) {
+          const color = getComputedStyle(surface).backgroundColor;
+          if (color !== "rgba(0, 0, 0, 0)" && color !== "transparent") {
+            background = color;
+            break;
+          }
+          surface = surface.parentElement;
+        }
+        const [light, dark] = [
+          luminance(getComputedStyle(element).color),
+          luminance(background),
+        ].sort((a, b) => b - a);
+        return (light + 0.05) / (dark + 0.05);
       }),
     );
   expect(ratios.length).toBeGreaterThan(0);
@@ -648,4 +667,131 @@ test("work project rows are not links", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("#projects .project a")).toHaveCount(0);
   await expect(page.locator("#projects .project__frame")).toHaveCount(0);
+});
+
+test("the name is one line on desktop and stacks on a phone", async ({
+  page,
+}) => {
+  const words = page.locator(".pixel-name svg");
+  const tops = () =>
+    words.evaluateAll((svgs) =>
+      svgs.map((svg) => svg.getBoundingClientRect().top),
+    );
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto("/");
+  const [kuday, yurter] = await tops();
+  expect(kuday).toBe(yurter);
+  await page.setViewportSize({ width: 360, height: 780 });
+  const [top, bottom] = await tops();
+  expect(bottom).toBeGreaterThan(top);
+  // Both words keep the same pixel size: YURTER's 35 columns vs KUDAY's 29.
+  const widths = await words.evaluateAll((svgs) =>
+    svgs.map((svg) => svg.getBoundingClientRect().width),
+  );
+  expect(widths[0] / 29).toBeCloseTo(widths[1] / 35, 1);
+  expect(widths[1] / 35).toBeGreaterThan(8);
+});
+
+test("each personal project has a pixel icon; work projects do not", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(
+    page.locator("#personal .project .project__icon svg"),
+  ).toHaveCount(PERSONAL_PROJECTS.length);
+  await expect(
+    page.locator("#personal .project__icon svg[aria-hidden]"),
+  ).toHaveCount(PERSONAL_PROJECTS.length);
+  await expect(page.locator("#projects .project__icon")).toHaveCount(0);
+});
+
+test("the contact section is inverted and its buttons invert on hover", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const contact = page.locator("#contact");
+  await expect(contact).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(contact.locator("h2")).toHaveCSS("color", "rgb(0, 0, 0)");
+  const github = contact.getByRole("link", { name: /GitHub/ });
+  await github.scrollIntoViewIfNeeded();
+  await github.hover();
+  await expect(github).toHaveCSS("background-color", "rgb(0, 0, 0)");
+  await expect(github).toHaveCSS("color", "rgb(255, 255, 255)");
+});
+
+test("the contact heading resolves in black on white", async ({ page }) => {
+  await page.goto("/");
+  const title = page.locator("#contact .pixel-reveal");
+  await title.scrollIntoViewIfNeeded();
+  await expect(title).toHaveAttribute("data-state", "animating");
+  const dark = await title.locator("canvas").evaluate((canvas) => {
+    const { data } = (canvas as HTMLCanvasElement)
+      .getContext("2d")!
+      .getImageData(
+        0,
+        0,
+        (canvas as HTMLCanvasElement).width,
+        (canvas as HTMLCanvasElement).height,
+      );
+    let count = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] > 200 && data[i] < 60) count++;
+    }
+    return count;
+  });
+  expect(dark).toBeGreaterThan(0);
+});
+
+test("the email can be copied without the button changing size", async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/");
+  const copy = page.getByRole("button", { name: "Copy email address" });
+  await copy.scrollIntoViewIfNeeded();
+  const before = await copy.boundingBox();
+  await copy.click();
+  await expect(copy).toContainText("Copied");
+  await expect(page.getByRole("status")).toHaveText("Email copied");
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    "kudayyurter@gmail.com",
+  );
+  const after = await copy.boundingBox();
+  expect(after?.width).toBe(before?.width);
+});
+
+test.describe("without JavaScript, the copy button", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("is hidden", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("button", { name: "Copy email address" }),
+    ).toBeHidden();
+  });
+});
+
+test("the current role has a filled square, past roles an outline", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const fills = await page
+    .locator(".job__meta")
+    .evaluateAll((metas) =>
+      metas.map((meta) => getComputedStyle(meta, "::before").backgroundColor),
+    );
+  expect(fills[0]).toBe("rgb(255, 255, 255)");
+  expect(new Set(fills.slice(1))).toEqual(new Set(["rgba(0, 0, 0, 0)"]));
+});
+
+test("the footer signs off with pixel initials and a way back up", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const footer = page.locator(".site-footer");
+  await expect(footer.locator("svg")).toHaveCount(1);
+  await expect(
+    footer.getByRole("link", { name: "Back to top" }),
+  ).toHaveAttribute("href", "#top");
 });

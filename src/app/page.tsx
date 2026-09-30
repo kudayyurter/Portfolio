@@ -1,5 +1,6 @@
 import Image from "next/image";
-import portraitHead from "@/assets/portrait-head.webp";
+import { Fragment, type CSSProperties } from "react";
+import { CopyEmail } from "@/components/copy-email";
 import { PixelBitmap } from "@/components/pixel-bitmap";
 import { PixelName } from "@/components/pixel-name";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
@@ -89,7 +90,14 @@ export default function Home() {
                     logo={job.logo}
                   />
                   <div>
-                    <p className="job__meta">{job.date}</p>
+                    <p
+                      className="job__meta"
+                      data-current={
+                        job.date.includes("Present") ? "" : undefined
+                      }
+                    >
+                      {job.date}
+                    </p>
                     <h3>{job.company}</h3>
                     <p className="job__role">{job.role}</p>
                     <ul>
@@ -157,21 +165,29 @@ export default function Home() {
               <li className="project project--linked" key={project.name}>
                 <span className="project__frame" aria-hidden="true" />
                 <RevealOnScroll className="project__body">
-                  <h3>{project.name}</h3>
-                  <p>{project.description}</p>
-                  <p className="project__stack">{project.stack}</p>
-                  <a
-                    className="text-link project__link"
-                    href={project.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`${project.name}: ${project.linkLabel}`}
+                  <span
+                    className="project__icon"
+                    style={{ "--rows": project.icon.length } as CSSProperties}
                   >
-                    {project.linkLabel}{" "}
-                    <span className="arrow" aria-hidden="true">
-                      ↗
-                    </span>
-                  </a>
+                    <PixelBitmap rows={project.icon} />
+                  </span>
+                  <div>
+                    <h3>{project.name}</h3>
+                    <p>{project.description}</p>
+                    <p className="project__stack">{project.stack}</p>
+                    <a
+                      className="text-link project__link"
+                      href={project.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${project.name}: ${project.linkLabel}`}
+                    >
+                      {project.linkLabel}{" "}
+                      <span className="arrow" aria-hidden="true">
+                        ↗
+                      </span>
+                    </a>
+                  </div>
                 </RevealOnScroll>
               </li>
             ))}
@@ -191,7 +207,7 @@ export default function Home() {
           </RevealOnScroll>
         </Section>
 
-        <Section id="contact" title="Contact">
+        <Section id="contact" title="Contact" className="section--inverted">
           <RevealOnScroll>
             <div className="contact-links">
               {[
@@ -214,27 +230,31 @@ export default function Home() {
                   external: true,
                 },
               ].map((contact) => (
-                <a
-                  key={contact.logo}
-                  className="button"
-                  href={contact.href}
-                  {...(contact.external
-                    ? { target: "_blank", rel: "noreferrer" }
-                    : {})}
-                >
-                  <Image
-                    src={`/logos/${contact.logo}.svg`}
-                    alt=""
-                    width={18}
-                    height={18}
-                  />
-                  {contact.label}
-                  {contact.external && (
-                    <span className="arrow" aria-hidden="true">
-                      ↗
-                    </span>
+                <Fragment key={contact.logo}>
+                  <a
+                    className="button"
+                    href={contact.href}
+                    {...(contact.external
+                      ? { target: "_blank", rel: "noreferrer" }
+                      : {})}
+                  >
+                    <Image
+                      src={`/logos/${contact.logo}.svg`}
+                      alt=""
+                      width={18}
+                      height={18}
+                    />
+                    {contact.label}
+                    {contact.external && (
+                      <span className="arrow" aria-hidden="true">
+                        ↗
+                      </span>
+                    )}
+                  </a>
+                  {contact.logo === "gmail" && (
+                    <CopyEmail email={links.email} />
                   )}
-                </a>
+                </Fragment>
               ))}
             </div>
             <p className="muted contact-note">Based in the US.</p>
@@ -243,8 +263,17 @@ export default function Home() {
       </main>
       <footer className="site-footer">
         <div className="site-footer__inner container">
-          <Image src={portraitHead} alt="" width={24} height={24} />
+          <PixelBitmap
+            rows={textToBitmap("KY")}
+            className="site-footer__initials"
+          />
           <span>© {new Date().getFullYear()} Kuday Yurter</span>
+          <a className="site-footer__top" href="#top">
+            Back to top{" "}
+            <span className="arrow arrow--up" aria-hidden="true">
+              ↑
+            </span>
+          </a>
         </div>
       </footer>
     </>

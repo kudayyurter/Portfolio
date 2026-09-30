@@ -1,3 +1,11 @@
+import {
+  bootScreen,
+  orbit,
+  snake,
+  sword,
+  tiledTerminals,
+} from "@/content/project-icons";
+
 export const links = {
   github: "https://github.com/kudayyurter",
   linkedin: "https://www.linkedin.com/in/kudayyurter/",
@@ -156,6 +164,7 @@ export const workProjects = [
 export const personalProjects = [
   {
     name: "Kessler",
+    icon: orbit,
     description:
       "Every tracked object in Earth orbit, 1957 to now: a live 3D globe of about 30,000 objects at their real positions, plus charts of how orbit got crowded. It started as my team’s MATLAB app that took 1st place out of 25 teams at the Grand Challenge Winter Summit.",
     stack: "Next.js · Three.js · FastAPI · AWS",
@@ -164,6 +173,7 @@ export const personalProjects = [
   },
   {
     name: "Dispatch",
+    icon: tiledTerminals,
     description:
       "A terminal app for running several coding agents (Claude Code, Codex, opencode) side by side in live, tiled terminals. Early stage.",
     stack: "Rust",
@@ -172,6 +182,7 @@ export const personalProjects = [
   },
   {
     name: "Snake Game",
+    icon: snake,
     description: "A retro snake game.",
     stack: "C++ · Raylib",
     href: "https://github.com/kudayyurter/SnakeGame",
@@ -179,6 +190,7 @@ export const personalProjects = [
   },
   {
     name: "Clash of Valor",
+    icon: sword,
     description: "A duel game that runs in the terminal.",
     stack: "C++",
     href: "https://github.com/kudayyurter/ClashOfValor",
@@ -186,6 +198,7 @@ export const personalProjects = [
   },
   {
     name: "Lumon boot splash",
+    icon: bootScreen,
     description:
       "A Linux boot animation styled after Lumon, the company in Severance.",
     stack: "Shell · Plymouth",

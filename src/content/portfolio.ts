@@ -1,5 +1,5 @@
 export const links = {
-  github: "https://github.com/namelessmonarch0",
+  github: "https://github.com/kudayyurter",
   linkedin: "https://www.linkedin.com/in/kudayyurter/",
   email: "kudayyurter@gmail.com",
 };
@@ -167,21 +167,21 @@ export const personalProjects = [
     description:
       "A terminal app for running several coding agents (Claude Code, Codex, opencode) side by side in live, tiled terminals. Early stage.",
     stack: "Rust",
-    href: "https://github.com/namelessmonarch0/Dispatch",
+    href: "https://github.com/kudayyurter/Dispatch",
     linkLabel: "GitHub",
   },
   {
     name: "Snake Game",
     description: "A retro snake game.",
     stack: "C++ · Raylib",
-    href: "https://github.com/namelessmonarch0/SnakeGame",
+    href: "https://github.com/kudayyurter/SnakeGame",
     linkLabel: "GitHub",
   },
   {
     name: "Clash of Valor",
     description: "A duel game that runs in the terminal.",
     stack: "C++",
-    href: "https://github.com/namelessmonarch0/ClashOfValor",
+    href: "https://github.com/kudayyurter/ClashOfValor",
     linkLabel: "GitHub",
   },
   {
@@ -189,7 +189,7 @@ export const personalProjects = [
     description:
       "A Linux boot animation styled after Lumon, the company in Severance.",
     stack: "Shell · Plymouth",
-    href: "https://github.com/namelessmonarch0/PlymouthLumonSplash",
+    href: "https://github.com/kudayyurter/PlymouthLumonSplash",
     linkLabel: "GitHub",
   },
 ];

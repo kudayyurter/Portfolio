@@ -9,6 +9,9 @@ updates:
       # Next.js and its ESLint config must move together.
       nextjs:
         patterns: ["next", "eslint-config-next"]
+      # react-dom requires the exact matching react version.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

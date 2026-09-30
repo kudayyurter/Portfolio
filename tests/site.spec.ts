@@ -308,6 +308,7 @@ test("content still appears if the page's JavaScript fails to load", async ({
   expect(
     new Set(await opacities(page, ".pixel-reveal > :first-child")),
   ).toEqual(new Set(["1"]));
+  expect(new Set(await dividerScales(page))).toEqual(new Set([1]));
 });
 
 test("the failsafe does not reveal content early when JavaScript works", async ({
@@ -533,4 +534,118 @@ test("nav jumps land below the header even when it wraps at 200% text", async ({
     );
     expect(titleTop, `${name} heading`).toBeGreaterThanOrEqual(headerBottom);
   }
+});
+
+/** How far each row's hairline has drawn, 0 to 1. */
+async function dividerScales(page: Page) {
+  return page.locator(".job, .project, .education").evaluateAll((elements) =>
+    elements.map((element) => {
+      const transform = getComputedStyle(element, "::before").transform;
+      return transform === "none" ? 1 : new DOMMatrix(transform).a;
+    }),
+  );
+}
+
+async function scrollToSection(page: Page, id: string) {
+  await page.evaluate((id) => {
+    const top = document.getElementById(id)!.getBoundingClientRect().top;
+    window.scrollTo({ top: scrollY + top, behavior: "instant" });
+  }, id);
+}
+
+test("the nav marks the section being read", async ({ page }) => {
+  await page.goto("/");
+  const nav = page.getByRole("navigation", { name: "Primary" });
+  const current = nav.locator('[aria-current="location"]');
+  await expect(current).toHaveCount(0);
+  await expect(nav.locator(".site-nav__marker")).toHaveCSS("opacity", "0");
+  for (const [id, label] of [
+    ["about", "About"],
+    ["experience", "Experience"],
+    ["stack", "Experience"],
+    ["projects", "Projects"],
+    ["personal", "Projects"],
+  ]) {
+    await scrollToSection(page, id);
+    await expect(current, `at #${id}`).toHaveText(label);
+  }
+  await page.evaluate(() =>
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "instant" }),
+  );
+  await expect(current).toHaveText("Contact");
+  await expect(nav.locator(".site-nav__marker")).toHaveCSS("opacity", "1");
+});
+
+test("row dividers draw in when scrolled to", async ({ page }) => {
+  await page.goto("/");
+  const lastRow = page.locator("#personal .project").last();
+  const scale = () =>
+    lastRow.evaluate((element) => {
+      const transform = getComputedStyle(element, "::before").transform;
+      return transform === "none" ? 1 : new DOMMatrix(transform).a;
+    });
+  // Rows start undrawn only once scripts have armed their reveal.
+  await expect(lastRow.locator(".reveal")).toHaveAttribute("data-armed", "");
+  expect(await scale()).toBe(0);
+  await lastRow.scrollIntoViewIfNeeded();
+  await expect.poll(scale).toBe(1);
+});
+
+test.describe("with reduced motion, dividers", () => {
+  test.use({ reducedMotion: "reduce" });
+
+  test("are fully drawn without scrolling", async ({ page }) => {
+    await page.goto("/");
+    expect(new Set(await dividerScales(page))).toEqual(new Set([1]));
+  });
+});
+
+test.describe("without JavaScript, dividers", () => {
+  test.use({ javaScriptEnabled: false });
+
+  test("are fully drawn", async ({ page }) => {
+    await page.goto("/");
+    expect(new Set(await dividerScales(page))).toEqual(new Set([1]));
+  });
+});
+
+test("link arrows are decorative and nudge on hover", async ({ page }) => {
+  await page.goto("/");
+  const arrows = page.getByText("↗", { exact: true });
+  expect(await arrows.count()).toBeGreaterThan(0);
+  for (const arrow of await arrows.all()) {
+    await expect(arrow).toHaveClass(/\barrow\b/);
+    await expect(arrow).toHaveAttribute("aria-hidden", "true");
+  }
+  const link = page.getByRole("link", { name: /More on GitHub/ });
+  await link.scrollIntoViewIfNeeded();
+  await link.hover();
+  await expect(link.locator(".arrow")).toHaveCSS(
+    "transform",
+    "matrix(1, 0, 0, 1, 3, -3)",
+  );
+});
+
+test("a personal project's whole row opens its link", async ({ page }) => {
+  await page.goto("/");
+  const row = page.locator(".project", {
+    has: page.getByRole("heading", { level: 3, name: "Kessler" }),
+  });
+  await expect(row.getByRole("link")).toHaveCount(1);
+  const href = await row.getByRole("link").getAttribute("href");
+  // Answer the external page locally so the test never depends on the network.
+  await page.context().route(href!, (route) => route.fulfill({ body: "" }));
+  await row.scrollIntoViewIfNeeded();
+  const popup = page.waitForEvent("popup");
+  // A point on the row that is not the link text; the overlay catches it.
+  await row.click({ position: { x: 40, y: 48 } });
+  const opened = await popup;
+  await opened.waitForURL(href!);
+  await opened.close();
+});
+
+test("work project rows are not links", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#projects .project a")).toHaveCount(0);
+  await expect(page.locator("#projects .project__frame")).toHaveCount(0);
 });

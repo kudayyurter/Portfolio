@@ -109,7 +109,10 @@ export default function Home() {
               target="_blank"
               rel="noreferrer"
             >
-              View my LinkedIn <span aria-hidden="true">↗</span>
+              View my LinkedIn{" "}
+              <span className="arrow" aria-hidden="true">
+                ↗
+              </span>
             </a>
           </RevealOnScroll>
         </Section>
@@ -151,7 +154,8 @@ export default function Home() {
         <Section id="personal" title="Personal projects">
           <ol className="projects">
             {personalProjects.map((project) => (
-              <li className="project" key={project.name}>
+              <li className="project project--linked" key={project.name}>
+                <span className="project__frame" aria-hidden="true" />
                 <RevealOnScroll className="project__body">
                   <h3>{project.name}</h3>
                   <p>{project.description}</p>
@@ -163,7 +167,10 @@ export default function Home() {
                     rel="noreferrer"
                     aria-label={`${project.name}: ${project.linkLabel}`}
                   >
-                    {project.linkLabel} <span aria-hidden="true">↗</span>
+                    {project.linkLabel}{" "}
+                    <span className="arrow" aria-hidden="true">
+                      ↗
+                    </span>
                   </a>
                 </RevealOnScroll>
               </li>
@@ -176,7 +183,10 @@ export default function Home() {
               target="_blank"
               rel="noreferrer"
             >
-              More on GitHub <span aria-hidden="true">↗</span>
+              More on GitHub{" "}
+              <span className="arrow" aria-hidden="true">
+                ↗
+              </span>
             </a>
           </RevealOnScroll>
         </Section>
@@ -219,7 +229,11 @@ export default function Home() {
                     height={18}
                   />
                   {contact.label}
-                  {contact.external && <span aria-hidden="true">↗</span>}
+                  {contact.external && (
+                    <span className="arrow" aria-hidden="true">
+                      ↗
+                    </span>
+                  )}
                 </a>
               ))}
             </div>

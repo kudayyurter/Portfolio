@@ -90,9 +90,10 @@ a {
   display: block;
 }
 .site-nav {
+  position: relative; /* the marker is placed against the links' offsets */
   display: flex;
   flex-wrap: wrap;
-  column-gap: clamp(12px, 3vw, 32px);
+  column-gap: clamp(20px, 3vw, 32px); /* room for the marker square */
   font-size: 0.8125rem;
   color: var(--muted);
 }
@@ -103,8 +104,24 @@ a {
   text-decoration: none;
   transition: color 0.15s;
 }
-.site-nav a:hover {
+.site-nav a:hover,
+.site-nav a[aria-current] {
   color: var(--fg);
+}
+/* One pixel square, parked beside the active link by site-header.tsx. */
+.site-nav__marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  background: var(--fg);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(var(--marker-x, 0), var(--marker-y, 0));
+}
+.site-nav[data-active] .site-nav__marker {
+  opacity: 1;
 }
 @media (min-width: 640px) {
   .site-nav {
@@ -157,6 +174,14 @@ a {
 }
 .text-link:hover {
   text-decoration-color: var(--fg);
+}
+.arrow {
+  display: inline-block;
+}
+a:hover > .arrow,
+a:focus-visible > .arrow,
+.project--linked:hover .arrow {
+  transform: translate(3px, -3px);
 }
 
 /* Sections */
@@ -254,9 +279,9 @@ a {
   flex-wrap: wrap; /* logo stacks above the text when space runs out */
   gap: 20px;
   align-items: flex-start;
+  position: relative;
   margin-top: 32px;
   padding-top: 32px;
-  border-top: 1px solid var(--line);
 }
 .education h3 {
   margin: 0;
@@ -267,6 +292,20 @@ a {
   color: var(--muted);
 }
 
+/* Row dividers: a hairline above each row, drawn in on scroll (see Motion). */
+.job::before,
+.project::before,
+.education::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+  transform-origin: left;
+}
+
 /* Experience */
 .timeline,
 .projects {
@@ -275,7 +314,7 @@ a {
   list-style: none;
 }
 .job {
-  border-top: 1px solid var(--line);
+  position: relative;
   color: var(--muted);
 }
 .job__body {
@@ -312,7 +351,7 @@ a {
 
 /* Projects */
 .project {
-  border-top: 1px solid var(--line);
+  position: relative;
   color: var(--muted);
   transition: color 0.15s;
 }
@@ -345,6 +384,54 @@ a {
 }
 .project__link {
   margin-top: 14px;
+}
+
+/*
+ * A personal project row is one big link: the link's overlay covers the row,
+ * so the link stays the only tab stop. The frame behind the text lights up
+ * with pixel corner brackets on hover or keyboard focus; the text never moves.
+ */
+.project--linked {
+  isolation: isolate;
+}
+.project--linked .project__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+.project__frame {
+  position: absolute;
+  inset: 0 -12px;
+  z-index: -1;
+  pointer-events: none;
+}
+.project__frame::before {
+  --arm: 8px;
+  --weight: 2px;
+  --ink: linear-gradient(var(--fg) 0 0);
+  content: "";
+  position: absolute;
+  inset: -4px;
+  opacity: 0;
+  background:
+    var(--ink) top left / var(--arm) var(--weight),
+    var(--ink) top left / var(--weight) var(--arm),
+    var(--ink) top right / var(--arm) var(--weight),
+    var(--ink) top right / var(--weight) var(--arm),
+    var(--ink) bottom left / var(--arm) var(--weight),
+    var(--ink) bottom left / var(--weight) var(--arm),
+    var(--ink) bottom right / var(--arm) var(--weight),
+    var(--ink) bottom right / var(--weight) var(--arm);
+  background-repeat: no-repeat;
+}
+.project--linked:hover .project__frame,
+.project--linked:has(.project__link:focus-visible) .project__frame {
+  background-color: #0a0a0a;
+}
+.project--linked:hover .project__frame::before,
+.project--linked:has(.project__link:focus-visible) .project__frame::before {
+  inset: 0;
+  opacity: 1;
 }
 @media (max-width: 640px) {
   .job__body {
@@ -429,6 +516,57 @@ a {
     animation: dot-in 160ms ease-out var(--delay) both;
   }
 
+  /* Hover feedback moves in whole pixel steps, not glides. */
+  .arrow {
+    transition: transform 160ms steps(2, end);
+  }
+  .site-nav__marker {
+    transition:
+      transform 200ms steps(4, end),
+      opacity 120ms steps(2, end);
+  }
+  .project__frame {
+    transition: background-color 0.15s;
+  }
+  .project__frame::before {
+    transition:
+      inset 120ms steps(2, end),
+      opacity 120ms steps(2, end);
+  }
+
+  /*
+   * A row's hairline draws left to right as the row reveals, led by a pixel
+   * square. Undrawn lines share the content's 3s failsafe.
+   */
+  .job::before,
+  .project::before,
+  .education::before {
+    transition: transform 500ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .job:has(> .reveal:not(.is-visible))::before,
+  .project:has(> .reveal:not(.is-visible))::before,
+  .reveal:not(.is-visible) > .education::before {
+    transform: scaleX(0);
+    animation: failsafe-show 0s 3s forwards;
+  }
+  .job:has(> .reveal[data-armed]:not(.is-visible))::before,
+  .project:has(> .reveal[data-armed]:not(.is-visible))::before,
+  .reveal[data-armed]:not(.is-visible) > .education::before {
+    animation: none;
+  }
+  .job:has(> .reveal.is-visible)::after,
+  .project:has(> .reveal.is-visible)::after,
+  .reveal.is-visible > .education::after {
+    content: "";
+    position: absolute;
+    top: -1px;
+    width: 3px;
+    height: 3px;
+    background: var(--fg);
+    pointer-events: none;
+    animation: divider-lead 500ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+
   .pixel-reveal:not([data-state="done"]) > :first-child {
     opacity: 0;
     animation: failsafe-show 0s 3s forwards;
@@ -442,6 +580,19 @@ a {
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes divider-lead {
+  from {
+    left: 0;
+  }
+  80% {
+    opacity: 1;
+  }
+  to {
+    left: calc(100% - 3px);
+    opacity: 0;
   }
 }
 
@@ -464,6 +615,15 @@ a {
     opacity: 1 !important;
   }
   .pixel-reveal__canvas {
+    display: none !important;
+  }
+  .job::before,
+  .project::before,
+  .education::before {
+    transform: none !important;
+  }
+  .site-nav__marker,
+  .project__frame {
     display: none !important;
   }
 }

@@ -12,6 +12,12 @@ updates:
       # react-dom requires the exact matching react version.
       react:
         patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+    ignore:
+      # typescript-eslint (via eslint-config-next) supports TypeScript <6.1, and
+      # TypeScript 7 ships no compiler API for it or Next.js to load. Lift this
+      # once typescript-eslint's peer range allows newer versions.
+      - dependency-name: typescript
+        versions: [">=6.1.0"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

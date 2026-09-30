@@ -1,59 +1,74 @@
-# Kuday Yurter — portfolio
+<div align="center">
 
-Source for [kudayyurter.dev](https://kudayyurter.dev): a single page on black with pixel lettering, section headings that resolve from pixels as you scroll, and the tools I use shown with their real logos. Built with Next.js 16 and React 19; no animation libraries.
+<img src="src/app/icon.png" alt="" width="88">
 
-## Development
+# Kuday Yurter
 
-Requires Node.js 20.19+, 22.13+, or 24+ (CI uses Node 24).
+**My portfolio: one black page, lettered in pixels.**
+
+[Live site](https://kudayyurter.dev) · [How it works](#how-it-works) · [Run locally](#run-locally)
+
+<img src=".github/assets/demo.gif" alt="Clicking Projects in the header jumps to the project list, the Personal projects heading sharpens from pixel blocks, and clicking Contact lands on the white contact section with email, GitHub and LinkedIn buttons" width="880">
+
+</div>
+
+Source for [kudayyurter.dev](https://kudayyurter.dev), where I show my experience, the tools I use, and what I've built at work and on my own. Section headings resolve from coarse pixel blocks as you scroll to them, and it's done without any animation library.
+
+## What it does
+
+- **Pixel lettering:** the name at the top is drawn from a hand-made 5×7 dot font, rendered as crisp SVG.
+- **Headings that resolve:** each section title sharpens from 16 px blocks to full detail the first time it scrolls into view.
+- **Real logos:** the tech stack, companies, schools and contact links use the brands' own marks.
+- **Works without JavaScript:** the page is server-rendered and complete; motion is only a layer on top.
+- **Respects reduced motion:** with `prefers-reduced-motion` or in print, everything shows in its final state.
+- **Contact in one click:** copy the email, or open GitHub or LinkedIn, from the inverted contact section.
+
+## How it works
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge" alt="Playwright">
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel">
+</p>
+
+| Path | What's there |
+|---|---|
+| [`src/content/portfolio.ts`](src/content/portfolio.ts) | All the copy; edit this to change the page |
+| [`src/app/page.tsx`](src/app/page.tsx) | Page markup, server-rendered |
+| [`src/components/`](src/components) | Pixel name, heading reveal, header, copy button |
+| [`src/lib/`](src/lib) | Pixel font, pixelation, the motion check |
+| [`src/app/opengraph-image.tsx`](src/app/opengraph-image.tsx) | The link-preview image |
+| [`public/logos/`](public/logos) | Every logo, as SVG |
+| [`tests/`](tests) | Playwright tests |
+
+- **Real text under the pixels:** a heading is normal markup; a canvas snapshot laid over it steps from coarse to sharp in about 600 ms and then hides, so the text itself stays readable to screen readers and without JavaScript.
+- **One motion switch:** CSS and JavaScript gate motion on the same media query (scripts on, no reduced-motion preference), so they never disagree about whether to animate.
+
+Checks, CI and deploy notes are in [docs/development.md](docs/development.md).
+
+## Run locally
+
+Requires Node.js 20.19+, 22.13+ or 24+ (CI uses Node 24).
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000).
+Then open [localhost:3000](http://localhost:3000).
 
-## How it fits together
+## Credits and license
 
-- `src/content/portfolio.ts`: all copy (bio, tech stack order, experience, work and personal projects, links). Edit this to change what the page says.
-- `src/app/page.tsx`: page markup, server-rendered, so the page is complete without JavaScript.
-- `src/components/pixel-name.tsx`: the dot-drawn name at the top of the page.
-- `src/components/section.tsx`, `pixel-reveal.tsx`: each section and the canvas overlay that resolves its heading from pixel blocks (`src/lib/pixelate.ts` does the pixelating).
-- `src/components/reveal-on-scroll.tsx`, `site-header.tsx`: the other small motion pieces.
-- `src/lib/pixel-font.ts`, `src/components/pixel-bitmap.tsx`: 5×7 glyphs for the name and company monograms, drawn as crisp SVG paths.
-- `src/app/opengraph-image.tsx`: the 1200×630 link-preview image.
-- `public/logos/`: tech-stack, company, school, and contact logos as SVGs (see [Logo credits](#logo-credits)).
-- `tests/`: Playwright tests for the page, the pixel font, and the pixelation helpers.
+Code is [MIT](LICENSE). Logos are trademarks of their owners.
 
-Motion only runs when `(scripting: enabled) and (prefers-reduced-motion: no-preference)` matches (`src/lib/motion.ts`, mirrored in `globals.css`); otherwise, and in print, everything shows in its final state.
+<details>
+<summary>Logo sources</summary>
 
-## Validation
+- **Tech stack:** [Devicon](https://devicon.dev) (MIT), [Simple Icons](https://simpleicons.org) (Databricks, CC0), Microsoft's official [Power Platform icons](https://learn.microsoft.com/power-platform/guidance/icons) (Power Platform, Copilot Studio), and Wikimedia Commons (Power BI; Tux by Larry Ewing, lewing@isc.tamu.edu, created with The GIMP). Dark single-color marks (Rust, Unreal, Unity, the AWS wordmark) are recolored white to show on black.
+- **Companies and schools:** Cummins and University of Houston from Wikimedia Commons (the Cummins badge's missing fill set to Cummins red); Texas A&M University–Victoria from the university's own approved-logos files (its dark gray text switched to the white version it publishes for dark backgrounds).
+- **Contact:** GitHub and LinkedIn from Devicon (the GitHub mark in its white dark-background version), Gmail from Wikimedia Commons.
 
-```bash
-npm run lint
-npx next typegen    # generates next-env.d.ts and route types, which tsc needs on a fresh clone
-npx tsc --noEmit
-npm run build
-npx playwright install chromium
-npm run test:e2e
-```
-
-`npm run test:e2e` starts the dev server on port 3000, or reuses one already running there.
-
-GitHub Actions (`.github/workflows/ci.yml`) runs the same checks plus `npm audit --audit-level=high` on pushes to `main`, on pull requests, and weekly. Dependabot opens weekly update PRs for npm packages and GitHub Actions.
-
-## Deploying
-
-Pushes to `main` deploy to kudayyurter.dev on Vercel. Preview deployments are disabled.
-
-## Logo credits
-
-- Tech stack: [Devicon](https://devicon.dev) (MIT), [Simple Icons](https://simpleicons.org) (Databricks, CC0), Microsoft's official [Power Platform icons](https://learn.microsoft.com/power-platform/guidance/icons) (Power Platform, Copilot Studio), and Wikimedia Commons (Power BI; Tux by Larry Ewing, lewing@isc.tamu.edu, created with The GIMP). Dark single-color marks (Rust, Unreal, Unity, the AWS wordmark) are recolored white to show on black.
-- Companies and schools: Cummins and University of Houston from Wikimedia Commons (the Cummins badge's missing fill set to Cummins red); Texas A&M University–Victoria from the university's own approved-logos files (its dark gray text switched to the white version it publishes for dark backgrounds).
-- Contact: GitHub and LinkedIn from Devicon (the GitHub mark in its white dark-background version), Gmail from Wikimedia Commons.
-
-Logos are trademarks of their owners.
-
-## License
-
-[MIT](LICENSE).
+</details>

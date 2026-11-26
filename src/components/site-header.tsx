@@ -7,12 +7,12 @@ import portraitHead from "@/assets/portrait-head.webp";
 /** Each nav link, and the page sections that count as reading it. */
 const NAV: { label: string; href: string; sections: string[] }[] = [
   { label: "About", href: "#about", sections: ["about"] },
+  { label: "Projects", href: "#projects", sections: ["projects", "personal"] },
   {
     label: "Experience",
     href: "#experience",
     sections: ["experience", "stack"],
   },
-  { label: "Projects", href: "#projects", sections: ["projects", "personal"] },
   { label: "Contact", href: "#contact", sections: ["contact"] },
 ];
 

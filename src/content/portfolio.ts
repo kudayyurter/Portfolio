@@ -164,6 +164,7 @@ export const workProjects = [
 export const personalProjects = [
   {
     name: "Kessler",
+    art: "orbit" as const,
     icon: orbit,
     description:
       "Every tracked object in Earth orbit, 1957 to now: a live 3D globe of about 30,000 objects at their real positions, plus charts of how orbit got crowded. It started as my team’s MATLAB app that took 1st place out of 25 teams at the Grand Challenge Winter Summit.",
@@ -173,6 +174,7 @@ export const personalProjects = [
   },
   {
     name: "Dispatch",
+    art: "terminals" as const,
     icon: tiledTerminals,
     description:
       "A terminal app for running several coding agents (Claude Code, Codex, opencode) side by side in live, tiled terminals. Early stage.",

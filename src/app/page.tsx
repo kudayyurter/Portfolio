@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Fragment, type CSSProperties } from "react";
 import { CopyEmail } from "@/components/copy-email";
+import { FeaturedProjectArt } from "@/components/featured-project-art";
 import { PixelBitmap } from "@/components/pixel-bitmap";
 import { PixelName } from "@/components/pixel-name";
 import { RevealOnScroll } from "@/components/reveal-on-scroll";
@@ -55,7 +56,7 @@ export default function Home() {
           </h1>
         </section>
 
-        <Section id="about" title="About">
+        <Section id="about" title="About" number="01">
           <RevealOnScroll>
             <div className="prose">
               {about.map((paragraph) => (
@@ -79,7 +80,83 @@ export default function Home() {
           </RevealOnScroll>
         </Section>
 
-        <Section id="experience" title="Experience">
+        <Section id="projects" title="Work projects" number="02">
+          <ol className="projects">
+            {workProjects.map((project, index) => (
+              <li
+                className={`project project--work${index < 2 ? " project--highlight" : ""}`}
+                key={project.name}
+              >
+                <RevealOnScroll className="project__body">
+                  <div>
+                    <h3>{project.name}</h3>
+                    <p className="project__context">{project.context}</p>
+                    <p>{project.description}</p>
+                    <p className="project__stack">{project.stack}</p>
+                  </div>
+                  <p className="project__result">{project.result}</p>
+                </RevealOnScroll>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        <Section id="personal" title="Personal projects" number="03">
+          <ol className="projects">
+            {personalProjects.map((project) => (
+              <li
+                className={`project project--linked${project.art ? " project--featured" : ""}`}
+                key={project.name}
+              >
+                <span className="project__frame" aria-hidden="true" />
+                <RevealOnScroll className="project__body">
+                  {project.art ? (
+                    <FeaturedProjectArt kind={project.art} name={project.name} />
+                  ) : (
+                    <span
+                      className="project__icon"
+                      style={{ "--rows": project.icon.length } as CSSProperties}
+                    >
+                      <PixelBitmap rows={project.icon} />
+                    </span>
+                  )}
+                  <div>
+                    <h3>{project.name}</h3>
+                    <p>{project.description}</p>
+                    <p className="project__stack">{project.stack}</p>
+                    <a
+                      className="text-link project__link"
+                      href={project.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${project.name}: ${project.linkLabel}`}
+                    >
+                      <span>{project.linkLabel}</span>{" "}
+                      <span className="arrow" aria-hidden="true">
+                        ↗
+                      </span>
+                    </a>
+                  </div>
+                </RevealOnScroll>
+              </li>
+            ))}
+          </ol>
+          <RevealOnScroll>
+            <a
+              className="text-link"
+              href={links.github}
+              target="_blank"
+              rel="noreferrer"
+            >
+              More on GitHub{" "}
+              <span className="arrow" aria-hidden="true">
+                ↗
+              </span>
+            </a>
+          </RevealOnScroll>
+        </Section>
+
+        <Section id="experience" title="Experience" number="04">
           <ol className="timeline">
             {experience.map((job) => (
               <li className="job" key={job.company}>
@@ -125,7 +202,7 @@ export default function Home() {
           </RevealOnScroll>
         </Section>
 
-        <Section id="stack" title="Tech stack">
+        <Section id="stack" title="Tech stack" number="05">
           <RevealOnScroll>
             <ol className="stack-grid">
               {stack.map((tool) => (
@@ -143,71 +220,13 @@ export default function Home() {
           </RevealOnScroll>
         </Section>
 
-        <Section id="projects" title="Work projects">
-          <ol className="projects">
-            {workProjects.map((project) => (
-              <li className="project" key={project.name}>
-                <RevealOnScroll className="project__body">
-                  <p className="eyebrow">{project.context}</p>
-                  <h3>{project.name}</h3>
-                  <p>{project.description}</p>
-                  <p className="project__result">{project.result}</p>
-                  <p className="project__stack">{project.stack}</p>
-                </RevealOnScroll>
-              </li>
-            ))}
-          </ol>
-        </Section>
-
-        <Section id="personal" title="Personal projects">
-          <ol className="projects">
-            {personalProjects.map((project) => (
-              <li className="project project--linked" key={project.name}>
-                <span className="project__frame" aria-hidden="true" />
-                <RevealOnScroll className="project__body">
-                  <span
-                    className="project__icon"
-                    style={{ "--rows": project.icon.length } as CSSProperties}
-                  >
-                    <PixelBitmap rows={project.icon} />
-                  </span>
-                  <div>
-                    <h3>{project.name}</h3>
-                    <p>{project.description}</p>
-                    <p className="project__stack">{project.stack}</p>
-                    <a
-                      className="text-link project__link"
-                      href={project.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`${project.name}: ${project.linkLabel}`}
-                    >
-                      {project.linkLabel}{" "}
-                      <span className="arrow" aria-hidden="true">
-                        ↗
-                      </span>
-                    </a>
-                  </div>
-                </RevealOnScroll>
-              </li>
-            ))}
-          </ol>
-          <RevealOnScroll>
-            <a
-              className="text-link"
-              href={links.github}
-              target="_blank"
-              rel="noreferrer"
-            >
-              More on GitHub{" "}
-              <span className="arrow" aria-hidden="true">
-                ↗
-              </span>
-            </a>
-          </RevealOnScroll>
-        </Section>
-
-        <Section id="contact" title="Contact" className="section--inverted">
+        <div className="contact-transition" aria-hidden="true" />
+        <Section
+          id="contact"
+          title="Contact"
+          number="06"
+          className="section--inverted"
+        >
           <RevealOnScroll>
             <div className="contact-links">
               {[
@@ -232,7 +251,7 @@ export default function Home() {
               ].map((contact) => (
                 <Fragment key={contact.logo}>
                   <a
-                    className="button"
+                    className={`button${contact.logo === "gmail" ? " contact-email" : ""}`}
                     href={contact.href}
                     {...(contact.external
                       ? { target: "_blank", rel: "noreferrer" }
@@ -244,7 +263,7 @@ export default function Home() {
                       width={18}
                       height={18}
                     />
-                    {contact.label}
+                    <span>{contact.label}</span>
                     {contact.external && (
                       <span className="arrow" aria-hidden="true">
                         ↗

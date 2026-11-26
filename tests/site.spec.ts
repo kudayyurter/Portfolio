@@ -81,7 +81,7 @@ test("renders every section and the key content", async ({ page }) => {
 
 test("the top of the page is just the name", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1 svg")).toHaveCount(2);
+  await expect(page.locator("h1 .pixel-name__word")).toHaveCount(2);
   await expect(page.getByRole("img", { name: /portrait/i })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "View projects" })).toHaveCount(
     0,
@@ -358,7 +358,7 @@ test("never says where in the US Kuday lives", async ({ page }) => {
   expect(description).not.toContain("Houston");
 });
 
-test("contact links are one size, each with its brand logo", async ({
+test("contact emphasizes email and keeps each link's brand logo", async ({
   page,
 }) => {
   await page.goto("/");
@@ -373,7 +373,8 @@ test("contact links are one size, each with its brand logo", async ({
       link.evaluate((element) => getComputedStyle(element).fontSize),
     ),
   );
-  expect(new Set(sizes).size).toBe(1);
+  expect(parseFloat(sizes[0])).toBeGreaterThan(parseFloat(sizes[1]));
+  expect(sizes[1]).toBe(sizes[2]);
   for (const [link, file] of links.map(
     (link, index) =>
       [link, ["gmail.svg", "github.svg", "linkedin.svg"][index]] as const,
@@ -385,7 +386,7 @@ test("contact links are one size, each with its brand logo", async ({
   }
 });
 
-test("sections run About, Experience, Tech stack, Work, Personal, Contact", async ({
+test("projects come before experience and the tech stack", async ({
   page,
 }) => {
   await page.goto("/");
@@ -395,10 +396,10 @@ test("sections run About, Experience, Tech stack, Work, Personal, Contact", asyn
       .evaluateAll((sections) => sections.map((section) => section.id)),
   ).toEqual([
     "about",
-    "experience",
-    "stack",
     "projects",
     "personal",
+    "experience",
+    "stack",
     "contact",
   ]);
 });
@@ -672,7 +673,7 @@ test("work project rows are not links", async ({ page }) => {
 test("the name is one line on desktop and stacks on a phone", async ({
   page,
 }) => {
-  const words = page.locator(".pixel-name svg");
+  const words = page.locator(".pixel-name__word");
   const tops = () =>
     words.evaluateAll((svgs) =>
       svgs.map((svg) => svg.getBoundingClientRect().top),
@@ -684,12 +685,12 @@ test("the name is one line on desktop and stacks on a phone", async ({
   await page.setViewportSize({ width: 360, height: 780 });
   const [top, bottom] = await tops();
   expect(bottom).toBeGreaterThan(top);
-  // Both words keep the same pixel size: YURTER's 35 columns vs KUDAY's 29.
+  // The same letter size applies to both the five- and six-character words.
   const widths = await words.evaluateAll((svgs) =>
     svgs.map((svg) => svg.getBoundingClientRect().width),
   );
-  expect(widths[0] / 29).toBeCloseTo(widths[1] / 35, 1);
-  expect(widths[1] / 35).toBeGreaterThan(8);
+  expect(widths[0] / 5).toBeCloseTo(widths[1] / 6, 1);
+  expect(widths[1] / 6).toBeGreaterThan(24);
 });
 
 test("each personal project has a pixel icon; work projects do not", async ({

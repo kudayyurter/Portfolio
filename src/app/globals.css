@@ -10,6 +10,7 @@
   --gutter: 16px;
   --header: 64px;
   --mono: var(--font-geist-mono), ui-monospace, monospace;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   color-scheme: dark;
 }
 
@@ -21,6 +22,7 @@
 
 html {
   background: var(--bg);
+  scrollbar-color: #808080 #000;
   /* --header-height is the measured header (site-header.tsx); 64px without JS. */
   scroll-padding-top: var(--header-height, var(--header));
 }
@@ -131,39 +133,69 @@ a {
 
 /* Hero */
 .hero {
+  position: relative;
+  /* Rain may extend above the name, but never over navigation or content. */
+  overflow: clip;
   padding-block: clamp(64px, 14vw, 160px) clamp(16px, 4vw, 48px);
 }
 .hero h1 {
   margin: 0;
 }
-/*
- * Each word's width is proportional to its column count (set by
- * pixel-name.tsx), so both words share one pixel size. Phones stack the words
- * to keep the pixels large.
- */
+/* Departure Mono draws connected pixel-art letters; cells reserve its advance
+ * width even if the font is delayed, so neither the name nor the page jumps. */
 .pixel-name {
   display: flex;
-  column-gap: calc(100% * var(--word-gap) / var(--line-columns));
+  gap: 0.4em;
+  font-size: clamp(2rem, 8vw, 6.875rem);
+  font-weight: 400;
+  font-synthesis: none;
+  line-height: 1.1;
+  letter-spacing: 0;
 }
-.pixel-name svg {
+.pixel-name__word {
+  display: inline-flex;
+  white-space: nowrap;
+}
+.pixel-name__cell {
+  position: relative;
   display: block;
-  flex: var(--columns) 1 0;
-  min-width: 0;
-  height: auto;
+  /* The font's advance is 350 units on a 550-unit em. */
+  width: calc(7em / 11);
+}
+.pixel-name__letter {
+  display: block;
+}
+.matrix-stream {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  pointer-events: none;
+  user-select: none;
+  font-size: 0.24em;
+  line-height: 1.25;
+  text-align: center;
+}
+.matrix-stream > span {
+  display: block;
+}
+@supports (font-size: round(down, 1em, 1px)) {
+  .pixel-name {
+    /* The face is designed on an 11px grid. */
+    font-size: round(down, clamp(2rem, 8vw, 6.875rem), 11px);
+  }
 }
 @media (max-width: 639px) {
   .pixel-name {
     flex-direction: column;
     align-items: flex-start;
-    max-width: 440px;
+    gap: 0.15em;
+    font-size: clamp(2rem, 18vw, 5.5rem);
   }
-  .pixel-name svg {
-    flex: none;
-    width: calc(100% * var(--columns) / var(--widest-columns));
-  }
-  .pixel-name svg + svg {
-    /* Percentage margins resolve against width, so the gap scales with the pixels. */
-    margin-top: calc(100% * var(--line-gap) / var(--widest-columns));
+  @supports (font-size: round(down, 1em, 1px)) {
+    .pixel-name {
+      font-size: round(down, clamp(2rem, 18vw, 5.5rem), 11px);
+    }
   }
 }
 
@@ -176,16 +208,18 @@ a {
   max-width: 100%;
   padding: 8px 20px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 0;
   overflow-wrap: anywhere;
   background: transparent;
   color: inherit;
   font-family: inherit;
   font-size: 0.9375rem;
   text-decoration: none;
+  transition: background-color 180ms, color 180ms, border-color 180ms;
 }
 /* Hover inverts the button outright, like a pixel flipping. */
-.button:hover {
+.button:hover,
+.button:focus-visible {
   border-color: var(--fg);
   background: var(--fg);
   color: var(--bg);
@@ -222,8 +256,32 @@ a:focus-visible > .arrow--up {
 .section {
   padding-block: clamp(56px, 8vw, 96px);
 }
-.section__title-wrap {
+.section__heading {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 24px);
   margin-bottom: 40px;
+}
+.section__title-wrap {
+  min-width: 0;
+}
+.section__number {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 24px;
+  background: var(--fg);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+}
+.section__rule {
+  flex: 1;
+  min-width: 16px;
+  height: 1px;
+  background: var(--line);
 }
 .section__title {
   margin: 0;
@@ -231,6 +289,7 @@ a:focus-visible > .arrow--up {
   line-height: 1.1;
   letter-spacing: -0.03em;
   font-weight: 600;
+  text-wrap: balance;
   /* A single long word ("Experience") must not overflow when text is enlarged. */
   overflow-wrap: break-word;
   hyphens: auto;
@@ -250,22 +309,18 @@ a:focus-visible > .arrow--up {
 /* Tech stack */
 .stack-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Hairlines as cell borders, so a short last row leaves no filled gap. */
+  /* Compact rows keep the full tool list available without dominating mobile. */
   border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
 }
 .stack-grid li {
-  display: grid;
-  grid-template-rows: 40px auto; /* icons line up even when a name wraps */
-  justify-items: center;
-  align-content: start;
-  gap: 10px;
-  padding: 20px 8px;
-  border-right: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 8px;
   border-bottom: 1px solid var(--line);
   transition: background-color 0.15s;
 }
@@ -274,16 +329,18 @@ a:focus-visible > .arrow--up {
 }
 .stack-grid img {
   display: block;
-  width: 40px;
-  height: 40px;
+  flex: none;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
+  filter: grayscale(1);
 }
 .stack-grid span {
   font-family: var(--mono);
   font-size: 0.6875rem;
   letter-spacing: 0.04em;
   color: var(--muted);
-  text-align: center;
+  text-align: left;
   overflow-wrap: anywhere;
 }
 
@@ -299,6 +356,7 @@ a:focus-visible > .arrow--up {
 }
 .monogram img {
   display: block;
+  filter: grayscale(1);
   max-width: none; /* wide wordmarks size the box, not the other way round */
 }
 .monogram svg {
@@ -417,6 +475,11 @@ a:focus-visible > .arrow--up {
   letter-spacing: -0.02em;
   color: var(--fg);
 }
+.project .project__context {
+  margin-bottom: 14px;
+  color: var(--faint);
+  font-size: 0.8125rem;
+}
 .project p {
   margin: 0;
 }
@@ -433,6 +496,17 @@ a:focus-visible > .arrow--up {
 }
 .project__link {
   margin-top: 14px;
+  min-height: 44px;
+  align-items: center;
+  padding: 6px 10px;
+  margin-left: -10px;
+  transition: color 180ms, background-color 180ms, text-decoration-color 180ms;
+}
+.project--linked:hover .project__link,
+.project--linked:focus-within .project__link {
+  color: var(--bg);
+  background: var(--fg);
+  text-decoration-color: transparent;
 }
 .project--linked .project__body {
   display: grid;
@@ -448,6 +522,114 @@ a:focus-visible > .arrow--up {
   display: block;
   width: auto;
   height: calc(var(--rows) * 3px); /* 3px per pixel, like the monograms */
+}
+
+/* Work results have their own reading column, separate from the explanation. */
+.project--work .project__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 0.42fr);
+  gap: clamp(24px, 5vw, 72px);
+  align-items: center;
+  max-width: none;
+  padding-block: 40px;
+}
+.project--work .project__result {
+  margin: 0;
+  padding-top: 16px;
+  font-size: clamp(1.0625rem, 2vw, 1.375rem);
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.project--work .project__result::before {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 2px;
+  margin-bottom: 16px;
+  background: var(--fg);
+}
+.project--highlight .project__result {
+  padding: 24px;
+  color: var(--bg);
+  background: var(--fg);
+}
+.project--highlight .project__result::before {
+  background: var(--bg);
+}
+
+/* Two illustrated white plates punctuate the otherwise black project list. */
+.project--featured .project__body {
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 64px);
+  max-width: none;
+  padding-block: 40px;
+}
+.project--featured h3 {
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
+}
+.project__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 292px;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+}
+.project__art-grid {
+  position: absolute;
+  inset: 24px 24px 64px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16'%3E%3Cpath fill='%23d4d4d4' d='M0 0h1v1H0z'/%3E%3C/svg%3E");
+  border: 1px solid #e8e8e8;
+}
+.project__art .project__icon {
+  position: relative;
+  padding: 0 0 32px;
+  color: #000;
+}
+.project__art .project__icon svg {
+  width: 120px;
+  height: 120px;
+  overflow: visible;
+}
+.project__art-caption {
+  position: absolute;
+  inset: auto 24px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+.project__art-cross {
+  width: 12px;
+  height: 12px;
+  background:
+    linear-gradient(#000 0 0) center / 100% 2px no-repeat,
+    linear-gradient(#000 0 0) center / 2px 100% no-repeat;
+}
+.project__art-shutter {
+  display: none;
+  position: absolute;
+  inset: 0;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  pointer-events: none;
+}
+.project__art-shutter > span {
+  background: #000;
+  transform-origin: bottom;
+}
+.project__satellite {
+  transform-origin: 6px 6px;
+}
+.project__pane--left {
+  clip-path: inset(0 50% 0 0);
+}
+.project__pane--right {
+  clip-path: inset(0 0 0 50%);
 }
 
 /*
@@ -499,12 +681,29 @@ a:focus-visible > .arrow--up {
 }
 @media (max-width: 640px) {
   .job__body,
-  .project--linked .project__body {
+  .project--linked .project__body,
+  .project--work .project__body {
     grid-template-columns: 1fr;
     gap: 12px;
   }
   .project__icon {
     padding-top: 0;
+  }
+  .project--featured .project__body {
+    gap: 24px;
+  }
+  .project__art {
+    min-height: 240px;
+  }
+  .project--highlight .project__result {
+    margin-top: 8px;
+    padding: 16px 20px;
+  }
+  .project--highlight .project__result::before {
+    display: none;
+  }
+  .section__rule {
+    display: none;
   }
 }
 
@@ -527,11 +726,22 @@ a:focus-visible > .arrow--up {
   box-shadow: 0 0 0 100vmax var(--bg);
   clip-path: inset(0 -100vmax);
 }
-/* GitHub's mark is white; flip it to black on white, and back on hover. */
+.contact-transition {
+  /* Normal flow follows the available width, including classic scrollbars. */
+  height: 24px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='24'%3E%3Cpath d='M0 0h32v4H0zM0 4h8v4H0zM12 4h4v8h-4zM20 4h12v4H20zM0 12h4v4H0zM24 8h4v4h-4zM16 16h4v4h-4zM4 20h4v4H4z'/%3E%3C/svg%3E") repeat-x top;
+}
+/* Brand marks follow the monochrome surface, including inverted controls. */
+.section--inverted .button img {
+  filter: grayscale(1);
+}
+.section--inverted .button:not(.contact-email):is(:hover, :focus-visible) img {
+  filter: grayscale(1) invert(1);
+}
 .section--inverted .button img[src$="github.svg"] {
   filter: invert(1);
 }
-.section--inverted .button:hover img[src$="github.svg"] {
+.section--inverted .button:is(:hover, :focus-visible) img[src$="github.svg"] {
   filter: none;
 }
 /* Copy is a helper for the email, not a fourth contact route, so it stays quiet until hovered. */
@@ -556,6 +766,28 @@ a:focus-visible > .arrow--up {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  align-items: center;
+}
+.contact-email {
+  flex-basis: 100%;
+  justify-content: flex-start;
+  border: 0;
+  padding: 12px 0;
+  font-size: clamp(1.25rem, 3.8vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+}
+.contact-email > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.contact-email:hover,
+.contact-email:focus-visible {
+  background: transparent;
+  color: var(--fg);
+  text-decoration: underline;
+  text-underline-offset: 6px;
 }
 .contact-links img {
   display: block;
@@ -623,8 +855,8 @@ a:focus-visible > .arrow--up {
 
   .reveal {
     transition:
-      opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
-      transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+      opacity 550ms var(--ease-out),
+      transform 550ms var(--ease-out);
   }
   /*
    * Hidden content shows itself after 3s unless a component has armed it
@@ -639,8 +871,12 @@ a:focus-visible > .arrow--up {
     animation: none;
   }
 
-  .pixel-name rect {
-    animation: dot-in 160ms ease-out var(--delay) both;
+  .pixel-name__letter {
+    animation: letter-arrive 1100ms var(--ease-out) var(--letter-delay) both;
+  }
+  .matrix-stream {
+    display: block;
+    animation: matrix-fall 1100ms linear var(--letter-delay) both;
   }
 
   /* Hover feedback moves in whole pixel steps, not glides. */
@@ -649,8 +885,26 @@ a:focus-visible > .arrow--up {
   }
   .site-nav__marker {
     transition:
-      transform 200ms steps(4, end),
-      opacity 120ms steps(2, end);
+      transform 300ms var(--ease-out),
+      opacity 150ms;
+  }
+  .project__art-shutter {
+    display: grid;
+  }
+  .project__art-shutter > span {
+    transform: scaleY(0);
+  }
+  .is-visible .project__art-shutter > span {
+    animation: panel-open 480ms var(--ease-out) var(--tile-delay) both;
+  }
+  .project--featured:is(:hover, :focus-within) .project__satellite {
+    animation: satellite-orbit 800ms steps(8, end) both;
+  }
+  .project--featured:is(:hover, :focus-within) .project__pane--left {
+    animation: pane-shift 600ms var(--ease-out) both;
+  }
+  .project--featured:is(:hover, :focus-within) .project__pane--right {
+    animation: pane-shift 600ms var(--ease-out) 80ms reverse both;
   }
   .project__frame {
     transition: background-color 0.15s;
@@ -723,13 +977,60 @@ a:focus-visible > .arrow--up {
   }
 }
 
-@keyframes dot-in {
-  from {
+@keyframes letter-arrive {
+  0% {
     opacity: 0;
+    transform: translateY(-0.8em);
+  }
+  45% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 0.65;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+@keyframes matrix-fall {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -1.6em);
+  }
+  20%, 55% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, 4em);
+  }
+}
+
+@keyframes panel-open {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0); }
+}
+
+@keyframes satellite-orbit {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pane-shift {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-0.5px); }
+}
+
 @media print {
+  .matrix-stream {
+    display: none !important;
+  }
+  .pixel-name__letter {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
   .site-header {
     position: static;
   }
@@ -750,7 +1051,8 @@ a:focus-visible > .arrow--up {
     transform: none !important;
   }
   .site-nav__marker,
-  .project__frame {
+  .project__frame,
+  .project__art-shutter {
     display: none !important;
   }
 }
